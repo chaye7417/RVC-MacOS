@@ -117,6 +117,23 @@ if __name__ == "__main__":
         p.daemon = True
         p.start()
 
+    def scan_voice_models():
+        """扫描 assets/weights 和 logs 目录，返回同时拥有 .pth 和 .index 的音色名列表。"""
+        weights_dir = os.path.join(os.getcwd(), "assets", "weights")
+        logs_dir = os.path.join(os.getcwd(), "logs")
+        pth_names = set()
+        idx_names = set()
+        if os.path.exists(weights_dir):
+            for f in os.listdir(weights_dir):
+                if f.endswith(".pth"):
+                    pth_names.add(f[:-4])
+        if os.path.exists(logs_dir):
+            for f in os.listdir(logs_dir):
+                if f.endswith(".index"):
+                    idx_names.add(f[:-6])
+        paired = sorted(pth_names & idx_names)
+        return paired
+
     class GUIConfig:
         def __init__(self) -> None:
             self.pth_path: str = ""
@@ -246,34 +263,32 @@ if __name__ == "__main__":
             data = self.load()
             self.config.use_jit = False  # data.get("use_jit", self.config.use_jit)
             sg.theme("LightBlue3")
+            self.voice_models = scan_voice_models()
+            # 从已保存的 pth_path 中恢复上次选择的音色名
+            saved_pth = data.get("pth_path", "")
+            default_voice = ""
+            if saved_pth:
+                default_voice = os.path.basename(saved_pth).replace(".pth", "")
+                if default_voice not in self.voice_models:
+                    default_voice = ""
+            if not default_voice and self.voice_models:
+                default_voice = self.voice_models[0]
             layout = [
                 [
                     sg.Frame(
                         title=i18n("Load model"),
                         layout=[
                             [
-                                sg.Input(
-                                    default_text=data.get("pth_path", ""),
-                                    key="pth_path",
+                                sg.Text("选择音色"),
+                                sg.Combo(
+                                    self.voice_models,
+                                    default_value=default_voice,
+                                    key="voice_model",
+                                    size=(30, 1),
+                                    enable_events=True,
+                                    readonly=True,
                                 ),
-                                sg.FileBrowse(
-                                    i18n("Select the .pth file"),
-                                    initial_folder=os.path.join(
-                                        os.getcwd(), "assets", "weights"
-                                    ),
-                                    file_types=[("Model File", "*.pth")],
-                                ),
-                            ],
-                            [
-                                sg.Input(
-                                    default_text=data.get("index_path", ""),
-                                    key="index_path",
-                                ),
-                                sg.FileBrowse(
-                                    i18n("Select the .index file"),
-                                    initial_folder=os.path.join(os.getcwd(), "logs"),
-                                    file_types=[("Index File", "*.index")],
-                                ),
+                                sg.Button("刷新列表", key="reload_models"),
                             ],
                         ],
                     )
@@ -595,13 +610,18 @@ if __name__ == "__main__":
                     self.window["sg_output_device"].Update(
                         value=self.gui_config.sg_output_device
                     )
+                if event == "reload_models":
+                    self.voice_models = scan_voice_models()
+                    self.window["voice_model"].Update(values=self.voice_models)
+                    if self.voice_models:
+                        self.window["voice_model"].Update(value=self.voice_models[0])
                 if event == "start_vc" and not flag_vc:
                     if self.set_values(values) == True:
                         printt("cuda_is_available: %s", torch.cuda.is_available())
                         self.start_vc()
                         settings = {
-                            "pth_path": values["pth_path"],
-                            "index_path": values["index_path"],
+                            "pth_path": self.gui_config.pth_path,
+                            "index_path": self.gui_config.index_path,
                             "sg_hostapi": values["sg_hostapi"],
                             "sg_wasapi_exclusive": values["sg_wasapi_exclusive"],
                             "sg_input_device": values["sg_input_device"],
@@ -697,11 +717,17 @@ if __name__ == "__main__":
                     self.stop_stream()
 
         def set_values(self, values):
-            if len(values["pth_path"].strip()) == 0:
-                sg.popup(i18n("Please choose the .pth file"))
+            voice_name = values.get("voice_model", "").strip()
+            if not voice_name:
+                sg.popup("请选择一个音色")
                 return False
-            if len(values["index_path"].strip()) == 0:
-                sg.popup(i18n("Please choose the .index file"))
+            pth_path = os.path.join(os.getcwd(), "assets", "weights", f"{voice_name}.pth")
+            index_path = os.path.join(os.getcwd(), "logs", f"{voice_name}.index")
+            if not os.path.exists(pth_path):
+                sg.popup(f"模型文件不存在: {voice_name}.pth")
+                return False
+            if not os.path.exists(index_path):
+                sg.popup(f"索引文件不存在: {voice_name}.index")
                 return False
             self.set_devices(values["sg_input_device"], values["sg_output_device"])
             self.config.use_jit = False  # values["use_jit"]
@@ -710,8 +736,8 @@ if __name__ == "__main__":
             self.gui_config.sg_wasapi_exclusive = values["sg_wasapi_exclusive"]
             self.gui_config.sg_input_device = values["sg_input_device"]
             self.gui_config.sg_output_device = values["sg_output_device"]
-            self.gui_config.pth_path = values["pth_path"]
-            self.gui_config.index_path = values["index_path"]
+            self.gui_config.pth_path = pth_path
+            self.gui_config.index_path = index_path
             self.gui_config.sr_type = ["sr_model", "sr_device"][
                 [
                     values["sr_model"],
