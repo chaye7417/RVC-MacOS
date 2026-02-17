@@ -7,7 +7,7 @@
 
 ## 项目概述
 
-- **功能**：实时语音变声器，支持 60+ 声音模型
+- **功能**：实时语音变声器，支持 70+ 声音模型（全中文命名）
 - **平台**：macOS（Apple Silicon M1/M2/M3/M4 或 Intel）
 - **仓库**：https://github.com/chaye7417/RVC-MacOS
 - **声音模型**：Hugging Face `chaye741/RVC-Voice-Models`（约 8GB）
@@ -111,13 +111,14 @@ print('基础模型下载完成')
 
 ---
 
-### 步骤 7：下载声音模型（约 8GB）
+### 步骤 7：下载声音模型（约 8GB，70+ 个中文命名模型）
 
 > 国内网络自动使用镜像加速
+> HF 仓库结构：`weights/中文名.pth` + `indices/中文名.index`
 
 ```bash
 python3 -c "
-import os, shutil
+import os, shutil, glob
 
 def check_hf_access():
     try:
@@ -145,19 +146,25 @@ snapshot_download(
     local_dir_use_symlinks=False
 )
 
-# 移动文件到正确位置
+# 移动 .pth 模型到 assets/weights/
 if os.path.exists('models_download/weights'):
     for f in os.listdir('models_download/weights'):
-        shutil.move(f'models_download/weights/{f}', f'assets/weights/{f}')
-        print(f'  移动模型: {f}')
+        if f.endswith('.pth'):
+            shutil.move(f'models_download/weights/{f}', f'assets/weights/{f}')
+            print(f'  模型: {f}')
 
+# 移动 .index 索引到 logs/
 if os.path.exists('models_download/indices'):
     for f in os.listdir('models_download/indices'):
-        shutil.move(f'models_download/indices/{f}', f'logs/{f}')
-        print(f'  移动索引: {f}')
+        if f.endswith('.index'):
+            shutil.move(f'models_download/indices/{f}', f'logs/{f}')
+            print(f'  索引: {f}')
 
 shutil.rmtree('models_download', ignore_errors=True)
-print('声音模型下载完成')
+
+pth_count = len(glob.glob('assets/weights/*.pth'))
+idx_count = len(glob.glob('logs/*.index'))
+print(f'下载完成：{pth_count} 个模型，{idx_count} 个索引')
 "
 ```
 
@@ -205,7 +212,7 @@ source .venv/bin/activate
 python -c "import torch; print('PyTorch:', torch.__version__)"
 python -c "import fairseq; print('fairseq: OK')"
 python -c "import FreeSimpleGUI; print('GUI 库: OK')"
-ls assets/weights/*.pth 2>/dev/null | wc -l | xargs echo "声音模型数量:"
+ls assets/weights/*.pth 2>/dev/null | wc -l | xargs echo "声音模型数量（应为 70+）:"
 ls assets/hubert/hubert_base.pt && echo "hubert 基础模型: OK"
 ls assets/rmvpe/rmvpe.pt && echo "rmvpe 音高模型: OK"
 ```
