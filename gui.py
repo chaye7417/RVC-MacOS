@@ -712,6 +712,8 @@ if __name__ == "__main__":
                     self.gui_config.use_pv = values["use_pv"]
                 elif event in ["vc", "im"]:
                     self.function = event
+                elif event in ("voice_model", "reload_models"):
+                    pass  # 切换音色不停止播放，下次启动时生效
                 elif event == "stop_vc" or event != "start_vc":
                     # Other parameters do not support hot update
                     self.stop_stream()
