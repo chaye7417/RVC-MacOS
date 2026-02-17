@@ -703,13 +703,6 @@ if __name__ == "__main__":
             if len(values["index_path"].strip()) == 0:
                 sg.popup(i18n("Please choose the .index file"))
                 return False
-            pattern = re.compile("[^\x00-\x7f]+")
-            if pattern.findall(values["pth_path"]):
-                sg.popup(i18n("pth path cannot contain unicode characters"))
-                return False
-            if pattern.findall(values["index_path"]):
-                sg.popup(i18n("index path cannot contain unicode characters"))
-                return False
             self.set_devices(values["sg_input_device"], values["sg_output_device"])
             self.config.use_jit = False  # values["use_jit"]
             # self.device_latency = values["device_latency"]
