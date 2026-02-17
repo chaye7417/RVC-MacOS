@@ -713,41 +713,17 @@ if __name__ == "__main__":
                 elif event in ["vc", "im"]:
                     self.function = event
                 elif event == "voice_model" and flag_vc:
-                    # 播放中热切换音色
+                    # 播放中切换音色：自动停止 → 换模型 → 重新启动
                     voice_name = values.get("voice_model", "").strip()
                     if voice_name:
                         pth_path = os.path.join(os.getcwd(), "assets", "weights", f"{voice_name}.pth")
                         index_path = os.path.join(os.getcwd(), "logs", f"{voice_name}.index")
                         if os.path.exists(pth_path) and os.path.exists(index_path):
+                            self.stop_stream()
                             self.gui_config.pth_path = pth_path
                             self.gui_config.index_path = index_path
-                            try:
-                                new_rvc = rtrvc.RVC(
-                                    self.gui_config.pitch,
-                                    self.gui_config.formant,
-                                    pth_path,
-                                    index_path,
-                                    self.gui_config.index_rate,
-                                    self.gui_config.n_cpu,
-                                    self.config.device,
-                                    self.config.use_jit,
-                                    self.config.is_half,
-                                    self.config.dml,
-                                )
-                                if new_rvc.tgt_sr != self.rvc.tgt_sr:
-                                    # 采样率不同，需要更新 resampler
-                                    if new_rvc.tgt_sr != self.gui_config.samplerate:
-                                        self.resampler2 = tat.Resample(
-                                            orig_freq=new_rvc.tgt_sr,
-                                            new_freq=self.gui_config.samplerate,
-                                            dtype=torch.float32,
-                                        ).to(self.config.device)
-                                    else:
-                                        self.resampler2 = None
-                                self.rvc = new_rvc
-                                printt("热切换音色: %s", voice_name)
-                            except Exception as e:
-                                printt("热切换失败: %s", str(e))
+                            self.start_vc()
+                            printt("切换音色: %s", voice_name)
                 elif event in ("voice_model", "reload_models"):
                     pass  # 未播放时切换，启动时生效
                 elif event == "stop_vc" or event != "start_vc":
