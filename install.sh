@@ -60,7 +60,7 @@ echo ""
 echo -e "${YELLOW}[3/6] 安装 Python 依赖...${NC}"
 
 pip install --upgrade pip -q
-pip install -r requirements/requirements-macos.txt -q
+pip install -r requirements/main.txt -q
 pip install huggingface_hub "httpx[socks]" -q
 echo "依赖安装完成"
 
