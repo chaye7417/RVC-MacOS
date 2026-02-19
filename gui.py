@@ -5,10 +5,15 @@ import shutil
 
 # PyTorch 2.6+ 安全限制修复
 import torch
+
 _original_torch_load = torch.load
+
+
 def _patched_torch_load(*args, **kwargs):
-    kwargs.setdefault('weights_only', False)
+    kwargs.setdefault("weights_only", False)
     return _original_torch_load(*args, **kwargs)
+
+
 torch.load = _patched_torch_load
 
 load_dotenv()
@@ -716,8 +721,12 @@ if __name__ == "__main__":
                     # 播放中切换音色：自动停止 → 换模型 → 重新启动
                     voice_name = values.get("voice_model", "").strip()
                     if voice_name:
-                        pth_path = os.path.join(os.getcwd(), "assets", "weights", f"{voice_name}.pth")
-                        index_path = os.path.join(os.getcwd(), "logs", f"{voice_name}.index")
+                        pth_path = os.path.join(
+                            os.getcwd(), "assets", "weights", f"{voice_name}.pth"
+                        )
+                        index_path = os.path.join(
+                            os.getcwd(), "logs", f"{voice_name}.index"
+                        )
                         if os.path.exists(pth_path) and os.path.exists(index_path):
                             self.stop_stream()
                             self.gui_config.pth_path = pth_path
@@ -735,7 +744,9 @@ if __name__ == "__main__":
             if not voice_name:
                 sg.popup("请选择一个音色")
                 return False
-            pth_path = os.path.join(os.getcwd(), "assets", "weights", f"{voice_name}.pth")
+            pth_path = os.path.join(
+                os.getcwd(), "assets", "weights", f"{voice_name}.pth"
+            )
             index_path = os.path.join(os.getcwd(), "logs", f"{voice_name}.index")
             if not os.path.exists(pth_path):
                 sg.popup(f"模型文件不存在: {voice_name}.pth")
