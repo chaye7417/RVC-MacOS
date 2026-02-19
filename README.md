@@ -66,6 +66,29 @@ chmod +x install.sh
 | 淡入淡出 | 0.08 ~ 0.10 | |
 | 音高算法 | fcpe | 快速；rmvpe 更稳定 |
 
+## 声音模型
+
+### 内置模型下载
+
+安装脚本会自动从 [Hugging Face](https://huggingface.co/chaye741/RVC-Voice-Models) 下载 70+ 内置模型。如果下载失败，可以手动下载：
+
+- **模型地址**：https://huggingface.co/chaye741/RVC-Voice-Models
+- **国内镜像**：https://hf-mirror.com/chaye741/RVC-Voice-Models
+
+下载后将文件放到对应目录：
+- `.pth` 模型文件 → `assets/weights/`
+- `.index` 索引文件 → `logs/`
+
+### 添加自定义模型
+
+你可以添加自己训练或从网上下载的 RVC 模型：
+
+1. 将 `.pth` 文件放入 `assets/weights/` 目录
+2. 将 `.index` 文件（如有）放入 `logs/` 目录
+3. 重启 RVC，在界面中即可选择新模型
+
+> 推荐模型下载站：[voice-models.com](https://voice-models.com)、[Hugging Face](https://huggingface.co/models?search=rvc)
+
 ## 卸载
 
 ```bash
