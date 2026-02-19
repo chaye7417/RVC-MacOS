@@ -7,10 +7,10 @@
 
 ## 项目概述
 
-- **功能**：实时语音变声器，支持 70+ 声音模型（全中文命名）
+- **功能**：实时语音变声器，支持 33 个声音模型（全中文命名）
 - **平台**：macOS（Apple Silicon M1/M2/M3/M4 或 Intel）
 - **仓库**：https://github.com/chaye7417/RVC-MacOS
-- **声音模型**：Hugging Face `chaye741/RVC-Voice-Models`（约 8GB）
+- **声音模型**：Hugging Face `chaye741/RVC-Voice-Models`（约 6.9GB）
 - **基础模型**：Hugging Face `lj1995/VoiceConversionWebUI`
 
 ---
@@ -111,7 +111,7 @@ print('基础模型下载完成')
 
 ---
 
-### 步骤 7：下载声音模型（约 8GB，70+ 个中文命名模型）
+### 步骤 7：下载声音模型（约 6.9GB，33 个中文命名模型）
 
 > 国内网络自动使用镜像加速
 > HF 仓库结构：`weights/中文名.pth` + `indices/中文名.index`
@@ -212,7 +212,7 @@ source .venv/bin/activate
 python -c "import torch; print('PyTorch:', torch.__version__)"
 python -c "import fairseq; print('fairseq: OK')"
 python -c "import FreeSimpleGUI; print('GUI 库: OK')"
-ls assets/weights/*.pth 2>/dev/null | wc -l | xargs echo "声音模型数量（应为 70+）:"
+ls assets/weights/*.pth 2>/dev/null | wc -l | xargs echo "声音模型数量（应为 33）:"
 ls assets/hubert/hubert_base.pt && echo "hubert 基础模型: OK"
 ls assets/rmvpe/rmvpe.pt && echo "rmvpe 音高模型: OK"
 ```
