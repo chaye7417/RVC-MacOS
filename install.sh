@@ -59,7 +59,8 @@ source .venv/bin/activate
 echo ""
 echo -e "${YELLOW}[3/6] 安装 Python 依赖...${NC}"
 
-pip install --upgrade pip -q
+pip3 cache purge -q
+pip3 install --upgrade "pip<24.1" -q
 pip install -r requirements/main.txt -q
 pip install huggingface_hub "httpx[socks]" -q
 echo "依赖安装完成"
