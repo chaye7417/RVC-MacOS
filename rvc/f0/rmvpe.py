@@ -39,42 +39,47 @@ def rmvpe_jit_export(
     return ckpt
 
 
-class RMVPE(nn.Module):
+class RMVPE(F0Predictor):
     def __init__(self, model_path, device="cpu", is_half=True):
-        super().__init__()
-        self.device = device
+        hop_length = 160
+        f0_min = 30
+        f0_max = 8000
+        sampling_rate = 16000
+
+        super().__init__(
+            hop_length,
+            f0_min,
+            f0_max,
+            sampling_rate,
+            device,
+        )
         self.is_half = is_half
-        
+
         if not os.path.exists(model_path):
             raise FileNotFoundError(f"Model file not found: {model_path}")
-        
-        try:
-            # Load the model using torch.load instead of torch.jit.load
-            state_dict = torch.load(model_path, map_location=device, weights_only=False)
-            self.model = nn.Sequential(
-                nn.Conv2d(1, 32, kernel_size=3, padding=1),
-                nn.ReLU(),
-                nn.Conv2d(32, 32, kernel_size=3, padding=1),
-                nn.ReLU(),
-                nn.Conv2d(32, 1, kernel_size=3, padding=1)
+
+        cents_mapping = 20 * np.arange(360) + 1997.3794084376191
+        self.cents_mapping = np.pad(cents_mapping, (4, 4))  # 368
+
+        self.mel_extractor = MelSpectrogram(
+            is_half,
+            128,
+            sampling_rate,
+            1024,
+            hop_length,
+            None,
+            f0_min,
+            f0_max,
+            device=self.device,
+        ).to(self.device)
+
+        if "privateuseone" in str(self.device):
+            self.model = ort.InferenceSession(
+                "%s/rmvpe.onnx" % os.environ["rmvpe_root"],
+                providers=["DmlExecutionProvider"],
             )
-            self.model.load_state_dict(state_dict)
-            self.model.eval()
-            if is_half:
-                self.model = self.model.half()
-            self.model = self.model.to(device)
-        except Exception as e:
-            raise RuntimeError(f"Failed to load model: {str(e)}")
-    
-    def forward(self, x):
-        with torch.no_grad():
-            x = x.to(self.device)
-            if self.is_half:
-                x = x.half()
-            return self.model(x)
-            
-    def calculate(self, x):
-        return self.forward(x)
+        else:
+            self.model = get_rmvpe(model_path, self.device, is_half)
 
     def compute_f0(
         self,
