@@ -14,6 +14,9 @@ from torchaudio.transforms import Resample
 from rvc.f0 import Generator
 from rvc.synthesizer import load_synthesizer
 
+# 兩份 libomp 並存時，faiss 多執行緒搜尋會 segfault
+faiss.omp_set_num_threads(1)
+
 
 class RVC:
     def __init__(

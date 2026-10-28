@@ -201,6 +201,12 @@ class Config:
             x_query = 5
             x_center = 30
             x_max = 32
+        if self.device == "mps":
+            # MPS 卷積的輸出長度上限為 65536，HuBERT 首層步幅為 5，每段含前後 pad 須短於約 20 秒
+            x_pad = 1
+            x_query = 2
+            x_center = 12
+            x_max = 14
         if self.dml:
             logger.info("Use DirectML instead")
             import torch_directml

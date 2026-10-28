@@ -158,6 +158,12 @@ class Pipeline(object):
             feats = feats * pitchff + feats0 * (1 - pitchff)
             feats = feats.to(feats0.dtype)
         p_len = torch.tensor([p_len], device=self.device).long()
+        # MPS 卷積的輸出長度上限為 65536，整段推論的聲碼器會超過，須改在 CPU 執行
+        if str(self.device).startswith("mps"):
+            net_g = net_g.cpu()
+            feats, p_len, sid = feats.cpu(), p_len.cpu(), sid.cpu()
+            if pitch is not None:
+                pitch, pitchf = pitch.cpu(), pitchf.cpu()
         with torch.no_grad():
             audio1 = (
                 (
@@ -213,6 +219,14 @@ class Pipeline(object):
             try:
                 index = faiss.read_index(file_index)
                 big_npy = index.reconstruct_n(0, index.ntotal)
+                if index.d != (768 if version == "v2" else 256):
+                    logger.warning(
+                        "Index dim %d mismatches %s model, skip index: %s",
+                        index.d,
+                        version,
+                        file_index,
+                    )
+                    index = big_npy = None
             except:
                 traceback.print_exc()
                 index = big_npy = None

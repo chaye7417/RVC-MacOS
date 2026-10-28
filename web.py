@@ -10,6 +10,8 @@ load_dotenv("sha256.env")
 if sys.platform == "darwin":
     os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
     os.environ["OMP_NUM_THREADS"] = "1"
+    # torch 與 faiss 各自內含 libomp，未設定時 faiss 搜尋會中止或 segfault
+    os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
 from infer.modules.vc import VC, show_info, hash_similarity
 from infer.modules.uvr5.modules import uvr
